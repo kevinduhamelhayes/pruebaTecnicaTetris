@@ -104,7 +104,7 @@ button:hover {
 
 #board {
     border: 2px solid #333;
-    background-color: #111;
+    background-color: #222;
 }
 
 @media (max-width: 768px) {

@@ -4,13 +4,13 @@ const COLS = 10;
 const BLOCK_SIZE = 30;
 const COLORS = [
     null,
-    '#FF0D72', // I - rojo
-    '#0DC2FF', // J - azul claro
-    '#0DFF72', // L - verde
-    '#F538FF', // O - magenta
-    '#FF8E0D', // S - naranja
-    '#FFE138', // T - amarillo
-    '#3877FF'  // Z - azul
+    '#FF3456', // I - rojo brillante
+    '#00FFFF', // J - cian brillante
+    '#39FF14', // L - verde neón
+    '#FF44FF', // O - magenta brillante
+    '#FF9933', // S - naranja brillante
+    '#FFFF00', // T - amarillo brillante
+    '#4488FF'  // Z - azul brillante
 ];
 
 // Definición de piezas (forma I, J, L, O, S, T, Z)
@@ -113,12 +113,38 @@ function getRandomPiece() {
 
 // Dibujar el tablero
 function drawBoard() {
+    // Primero dibujamos un fondo de cuadrícula para mayor visibilidad
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0, 0, COLS, ROWS);
+    
+    // Dibujamos una cuadrícula ligera
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 0.02;
+    
+    // Líneas verticales
+    for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, ROWS);
+        ctx.stroke();
+    }
+    
+    // Líneas horizontales
+    for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(COLS, y);
+        ctx.stroke();
+    }
+    
+    // Luego dibujamos las piezas fijadas en el tablero
     board.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value > 0) {
                 ctx.fillStyle = COLORS[value];
                 ctx.fillRect(x, y, 1, 1);
-                ctx.strokeStyle = '#000';
+                ctx.strokeStyle = '#FFFFFF'; // Borde blanco para mejor visibilidad
+                ctx.lineWidth = 0.05;
                 ctx.strokeRect(x, y, 1, 1);
             }
         });
@@ -132,7 +158,8 @@ function drawPiece(piece, context, offsetX = 0, offsetY = 0) {
             if (value > 0) {
                 context.fillStyle = COLORS[piece.type];
                 context.fillRect(x + offsetX, y + offsetY, 1, 1);
-                context.strokeStyle = '#000';
+                context.strokeStyle = '#FFFFFF'; // Borde blanco para mejor visibilidad
+                context.lineWidth = 0.05;
                 context.strokeRect(x + offsetX, y + offsetY, 1, 1);
             }
         });
@@ -270,17 +297,45 @@ function handleKeyPress(e) {
     // Si se presionó espacio, actualizar inmediatamente
     if (e.keyCode === 32) {
         mergePiece();
-        checkGameOver();
         clearLines();
+        
+        // Generar nueva pieza
         currentPiece = nextPiece;
         nextPiece = getRandomPiece();
         drawNextPiece();
+        
+        // Verificar game over después de generar la nueva pieza
+        checkGameOver();
     }
 }
 
 // Dibujar la siguiente pieza
 function drawNextPiece() {
     clearCanvas(nextPieceCtx, nextPieceCanvas);
+    
+    // Añadir un fondo claro para el canvas de la siguiente pieza
+    nextPieceCtx.fillStyle = '#222';
+    nextPieceCtx.fillRect(0, 0, 4, 4);
+    
+    // Dibujamos una cuadrícula ligera
+    nextPieceCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    nextPieceCtx.lineWidth = 0.02;
+    
+    // Líneas verticales
+    for (let x = 0; x <= 4; x++) {
+        nextPieceCtx.beginPath();
+        nextPieceCtx.moveTo(x, 0);
+        nextPieceCtx.lineTo(x, 4);
+        nextPieceCtx.stroke();
+    }
+    
+    // Líneas horizontales
+    for (let y = 0; y <= 4; y++) {
+        nextPieceCtx.beginPath();
+        nextPieceCtx.moveTo(0, y);
+        nextPieceCtx.lineTo(4, y);
+        nextPieceCtx.stroke();
+    }
     
     // Centrar la pieza en el canvas
     const offsetX = (4 - nextPiece.piece[0].length) / 2;
@@ -291,8 +346,9 @@ function drawNextPiece() {
 
 // Verificar si el juego ha terminado
 function checkGameOver() {
-    // Si una pieza colisiona al generarse, juego terminado
-    if (checkCollision(currentPiece.piece, currentPiece.pos)) {
+    // El juego termina solo cuando una nueva pieza colisiona al generarse
+    // Es decir, cuando no hay espacio para colocar la nueva pieza en la parte superior
+    if (currentPiece.pos.y === 0 && checkCollision(currentPiece.piece, currentPiece.pos)) {
         gameOver = true;
         cancelAnimationFrame(requestId);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -327,25 +383,30 @@ function movePieceDown() {
     pos.y++;
     
     if (!checkCollision(currentPiece.piece, pos)) {
+        // Si no hay colisión, la pieza sigue bajando
         currentPiece.pos = pos;
     } else {
-        // La pieza ha tocado el fondo o colisiona
+        // La pieza ha tocado el fondo o colisiona con otra pieza
         mergePiece();
-        checkGameOver();
         clearLines();
         
         // Generar nueva pieza
         currentPiece = nextPiece;
         nextPiece = getRandomPiece();
         drawNextPiece();
+        
+        // Verificar si el juego ha terminado después de generar la nueva pieza
+        checkGameOver();
     }
 }
 
 // Dibujar todo el juego
 function draw() {
-    clearCanvas(ctx, canvas);
+    // No limpiamos todo el canvas, solo lo repintamos directamente
     drawBoard();
-    drawPiece(currentPiece, ctx, currentPiece.pos.x, currentPiece.pos.y);
+    if (currentPiece) {
+        drawPiece(currentPiece, ctx, currentPiece.pos.x, currentPiece.pos.y);
+    }
 }
 
 // Iniciar el juego
