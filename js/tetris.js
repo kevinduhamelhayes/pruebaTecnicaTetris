@@ -1,3 +1,14 @@
+/**
+ * TETRIS - Juego clásico implementado en JavaScript usando Canvas
+ * 
+ * Este juego implementa las mecánicas clásicas del Tetris:
+ * - Piezas que caen desde la parte superior
+ * - Rotación y movimiento de piezas
+ * - Eliminación de líneas completas
+ * - Sistema de puntuación y niveles
+ * - Aumento de dificultad con el tiempo
+ */
+
 // Configuración del tablero
 const ROWS = 20;
 const COLS = 10;
@@ -67,7 +78,10 @@ let requestId = null;
 let dropStart = Date.now();
 let dropInterval = 1000; // Intervalo inicial de caída en ms
 
-// Inicializar el juego
+/**
+ * Inicializa el juego configurando los elementos del canvas, eventos y controles.
+ * Se ejecuta cuando el DOM está completamente cargado.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById('board');
     ctx = canvas.getContext('2d');
@@ -92,12 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', handleKeyPress);
 });
 
-// Crear un tablero vacío
+/**
+ * Crea un tablero vacío con las dimensiones especificadas.
+ * @returns {Array} Matriz bidimensional que representa el tablero de juego.
+ */
 function createBoard() {
     return Array.from({length: ROWS}, () => Array(COLS).fill(0));
 }
 
-// Obtener una pieza aleatoria
+/**
+ * Genera una pieza aleatoria y la coloca en la parte superior del tablero.
+ * @returns {Object} Objeto que contiene la matriz de la pieza, su posición y tipo.
+ */
 function getRandomPiece() {
     const pieceType = Math.floor(Math.random() * PIECES.length);
     const piece = PIECES[pieceType];
@@ -279,33 +299,41 @@ function handleKeyPress(e) {
             }
             break;
         case 32: // Espacio (caída instantánea)
+            // Movemos la pieza hacia abajo hasta que colisione
             while (!checkCollision(currentPiece.piece, pos)) {
                 pos.y++;
             }
             pos.y--; // Retroceder una posición (la última válida)
+            // Actualizar la posición de la pieza actual con la nueva posición calculada
+            currentPiece.pos = pos;
+            
+            // La pieza ha llegado al fondo, ahora procesamos lo que ocurre después
+            // Esperamos un breve momento para que el jugador pueda ver dónde cayó la pieza
+            setTimeout(() => {
+                // Fijar la pieza en el tablero
+                mergePiece();
+                clearLines();
+                
+                // Generar nueva pieza
+                currentPiece = nextPiece;
+                nextPiece = getRandomPiece();
+                drawNextPiece();
+                
+                // Verificar game over después de generar la nueva pieza
+                checkGameOver();
+                
+                // Volvemos a dibujar para actualizar el estado del juego
+                draw();
+            }, 50); // Un breve retraso para visualizar la caída
             break;
         case 80: // P (pausa)
             togglePause();
             break;
     }
     
-    // Verificar si el movimiento es válido
-    if (!checkCollision(currentPiece.piece, pos)) {
+    // Verificar si el movimiento es válido para las teclas normales de movimiento
+    if (!checkCollision(currentPiece.piece, pos) && e.keyCode !== 32) {
         currentPiece.pos = pos;
-    }
-    
-    // Si se presionó espacio, actualizar inmediatamente
-    if (e.keyCode === 32) {
-        mergePiece();
-        clearLines();
-        
-        // Generar nueva pieza
-        currentPiece = nextPiece;
-        nextPiece = getRandomPiece();
-        drawNextPiece();
-        
-        // Verificar game over después de generar la nueva pieza
-        checkGameOver();
     }
 }
 
